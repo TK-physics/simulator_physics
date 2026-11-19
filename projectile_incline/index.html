@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#142d4e">
+<title>斜面上の投射運動｜物理シミュレーション</title>
+<style>
+:root{--navy:#142d4e;--blue:#2563eb;--cyan:#0891b2;--orange:#ea580c;--green:#16834a;--ink:#172338;--muted:#64748b;--line:#dbe3ee;--paper:#f4f7fb;--card:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,"Yu Gothic UI","Meiryo",sans-serif;line-height:1.55}
+header{background:linear-gradient(115deg,#142d4e,#214d78);color:white;padding:22px clamp(16px,4vw,42px) 20px}
+.header-inner{max-width:1180px;margin:auto}
+.eyebrow{font-size:12px;letter-spacing:.08em;opacity:.8;margin-bottom:5px}
+h1{font-size:clamp(21px,3vw,30px);line-height:1.3;margin:0 0 7px;font-weight:750}
+.subtitle{font-size:13px;opacity:.86}
+main{max-width:1180px;margin:20px auto 48px;padding:0 14px}
+.notice{background:#eef6ff;border:1px solid #c8def8;color:#24476c;padding:12px 14px;border-radius:12px;font-size:13px;margin-bottom:14px}
+.mode-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.mode-btn{border:1px solid #cbd5e1;background:white;color:#334155;border-radius:999px;padding:10px 15px;font-weight:700;cursor:pointer;font-size:13px}
+.mode-btn[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:white}
+.layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(285px,.9fr);gap:14px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 3px 12px rgba(26,49,79,.045);overflow:hidden}
+.card-head{padding:14px 17px 10px;border-bottom:1px solid #edf1f6;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.card-head h2{font-size:16px;margin:0}
+.small-muted{color:var(--muted);font-size:11px}
+.canvas-wrap{padding:10px 12px 4px}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:#fbfdff}
+#scene{aspect-ratio:1.55 / 1;min-height:250px;max-height:490px}
+#chart{aspect-ratio:2.55 / 1;min-height:130px}
+.controls{padding:14px 16px 16px}
+.control-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:13px 0 5px}
+.control-row label{font-size:13px;font-weight:650}
+.value{font-variant-numeric:tabular-nums;color:#1d4ed8;font-size:13px;font-weight:750;white-space:nowrap}
+input[type=range]{width:100%;accent-color:var(--blue);cursor:pointer}
+.control-help{font-size:11px;color:var(--muted);margin-top:2px}
+.control-sep{border:0;border-top:1px solid #edf1f6;margin:14px 0}
+.playbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px 14px}
+button,select{font:inherit}
+.action{border:0;border-radius:9px;padding:9px 13px;background:var(--blue);color:white;font-weight:700;cursor:pointer;font-size:13px}
+.action.secondary{background:#e8eef7;color:#213d60}
+.action:disabled{opacity:.45;cursor:not-allowed}
+select{border:1px solid #cbd5e1;border-radius:8px;background:white;padding:7px 9px;color:#334155;font-size:12px}
+.time-readout{margin-left:auto;font-size:12px;color:#475569;font-variant-numeric:tabular-nums}
+.side-stack{display:grid;gap:14px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:13px}
+.stat{background:#f7f9fc;border:1px solid #e9eef5;border-radius:11px;padding:10px}
+.stat .k{font-size:11px;color:var(--muted);margin-bottom:3px}
+.stat .v{font-size:16px;font-weight:750;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat .u{font-size:10px;color:var(--muted);margin-left:3px}
+.formula-list{padding:13px 16px 15px;display:grid;gap:9px}
+.formula{background:#f8fafc;border-left:3px solid #5b8bd8;padding:8px 10px;border-radius:5px;font-size:13px}
+.formula .tag{font-size:10px;color:#64748b;display:block;margin-bottom:2px}
+.math{font-family:Cambria,Georgia,serif;font-size:15px;letter-spacing:.01em}
+.section{margin-top:14px}
+.section-inner{padding:14px 17px 17px}
+.section h2{font-size:16px;margin:0 0 9px}
+.section p,.section li{font-size:13px}
+.section ul{padding-left:20px;margin:7px 0}
+.question{border:1px solid #e3eaf3;border-radius:10px;margin:9px 0;overflow:hidden}
+.question summary{padding:11px 13px;cursor:pointer;font-weight:650;font-size:13px;background:#fafcff}
+.question .answer{padding:10px 13px 13px;font-size:13px;border-top:1px solid #e8eef5}
+.answer strong{color:#135d9b}
+.badge{display:inline-block;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:700;background:#eaf2ff;color:#21518b}
+.warning{background:#fff8eb;border:1px solid #f5dfb6;color:#76501a;border-radius:10px;padding:10px 12px;font-size:12px;margin-top:10px}
+.footer{max-width:1180px;margin:0 auto;padding:0 16px 28px;color:#7a8797;font-size:11px}
+[hidden]{display:none!important}
+@media(max-width:820px){.layout{grid-template-columns:1fr}.side-stack{grid-template-columns:1fr 1fr}.side-stack .card:last-child{grid-column:1/-1}#scene{min-height:230px}}
+@media(max-width:560px){main{margin-top:13px}.side-stack{grid-template-columns:1fr}.side-stack .card:last-child{grid-column:auto}.card-head{padding:12px 13px}.controls{padding:11px 13px}.stat-grid{padding:10px}.stat .v{font-size:15px}.playbar{padding:9px 11px 12px}#scene{min-height:205px}.mode-btn{padding:9px 11px;font-size:12px}}
+</style>
+</head>
+<body>
+<header><div class="header-inner">
+  <div class="eyebrow">PHYSICS INTERACTIVE LEARNING</div>
+  <h1>斜面上の投射運動</h1>
+  <div class="subtitle">2024年度 日本大学 N方式（第1期）｜入試問題演習【2】</div>
+</div></header>
+<main>
+  <div class="notice"><strong>使い方：</strong>モードを選び、条件を調整して「再生」を押してください。後半の（3）〜（5）は、問題文の指定どおり斜面角を φ＝45° として扱います。数値例は現象を観察するための設定で、問題文で指定された値ではありません。</div>
+  <nav class="mode-tabs" aria-label="シミュレーションの種類">
+    <button class="mode-btn" data-mode="basic" aria-pressed="true">（1）（2）基本の投射</button>
+    <button class="mode-btn" data-mode="bounce" aria-pressed="false">（3）（4）垂直衝突と反発</button>
+    <button class="mode-btn" data-mode="range" aria-pressed="false">（5）到達距離が最大</button>
+  </nav>
+  <div class="layout">
+    <div class="card">
+      <div class="card-head"><h2 id="sceneTitle">小球の軌道</h2><span class="badge" id="modeBadge">一般の斜面</span></div>
+      <div class="canvas-wrap"><canvas id="scene" width="900" height="580" aria-label="斜面上を運動する小球のシミュレーション"></canvas></div>
+      <div class="playbar">
+        <button class="action" id="playBtn">▶ 再生</button>
+        <button class="action secondary" id="resetBtn">↺ 最初に戻す</button>
+        <label class="small-muted" for="speedSelect">再生速度</label>
+        <select id="speedSelect"><option value="0.5">0.5倍</option><option value="1" selected>1倍</option><option value="2">2倍</option><option value="4">4倍</option></select>
+        <span class="time-readout" id="timeReadout">t = 0.00 s</span>
+      </div>
+      <div class="card-head"><h2 id="chartTitle">位置と時間</h2><span class="small-muted" id="chartNote">アニメーションに連動</span></div>
+      <div class="canvas-wrap"><canvas id="chart" width="900" height="340" aria-label="運動のグラフ"></canvas></div>
+    </div>
+    <aside class="side-stack">
+      <div class="card">
+        <div class="card-head"><h2>条件を設定する</h2></div>
+        <div class="controls">
+          <div class="control-row"><label for="v0">初速度 v₀</label><output class="value" id="v0Val">10.0 m/s</output></div>
+          <input id="v0" type="range" min="3" max="20" step="0.5" value="10">
+          <div class="control-help">打ち上げる瞬間の速さ</div>
+          <div id="phiControl">
+            <div class="control-row"><label for="phi">斜面の角度 φ</label><output class="value" id="phiVal">45.0°</output></div>
+            <input id="phi" type="range" min="10" max="60" step="1" value="45">
+          </div>
+          <div id="thetaControl">
+            <div class="control-row"><label for="theta">打ち上げ角度 θ</label><output class="value" id="thetaVal">30.0°</output></div>
+            <input id="theta" type="range" min="5" max="44" step="0.5" value="30">
+            <div class="control-help">斜面となす角度（θ＋φ＜90°）</div>
+          </div>
+          <div id="thetaFixed" class="warning" hidden></div>
+          <div id="eControl" hidden>
+            <div class="control-row"><label for="e">はね返り係数 e</label><output class="value" id="eVal">0.70</output></div>
+            <input id="e" type="range" min="0.10" max="1" step="0.05" value="0.70">
+            <div class="control-help">衝突後の垂直方向の速さ ÷ 衝突直前の速さ</div>
+          </div>
+          <div class="control-row"><label>重力加速度 g</label><output class="value">9.8 m/s²</output></div>
+          <hr class="control-sep">
+          <div class="small-muted" id="conditionNote">斜面角・打ち上げ角は自由に変更できます。</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>運動の数値</h2></div>
+        <div class="stat-grid" id="stats">
+          <div class="stat"><div class="k">斜面方向の加速度 aₓ</div><div><span class="v" id="axVal">−6.93</span><span class="u">m/s²</span></div></div>
+          <div class="stat"><div class="k">垂直方向の加速度 aᵧ</div><div><span class="v" id="ayVal">−6.93</span><span class="u">m/s²</span></div></div>
+          <div class="stat"><div class="k" id="timeLabel">初回衝突時刻</div><div><span class="v" id="hitTimeVal">—</span><span class="u">s</span></div></div>
+          <div class="stat"><div class="k" id="rangeLabel">初回衝突位置 x</div><div><span class="v" id="rangeVal">—</span><span class="u">m</span></div></div>
+          <div class="stat"><div class="k">現在の斜面方向速度 vₓ</div><div><span class="v" id="vxVal">—</span><span class="u">m/s</span></div></div>
+          <div class="stat"><div class="k">現在の垂直方向速度 vᵧ</div><div><span class="v" id="vyVal">—</span><span class="u">m/s</span></div></div>
+          <div class="stat" id="bounceTimeStat" hidden><div class="k">反発後〜2回目衝突まで t₂</div><div><span class="v" id="bounceTimeVal">—</span><span class="u">s</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>この問題で使う式</h2></div>
+        <div class="formula-list" id="formulas"></div>
+      </div>
+    </aside>
+  </div>
+  <section class="card section">
+    <div class="section-inner">
+      <h2>学習のポイント</h2>
+      <div id="learningText"></div>
+    </div>
+  </section>
+  <section class="card section">
+    <div class="section-inner">
+      <h2>自分で考えてみよう</h2>
+      <p class="small-muted">まずはシミュレーションを操作して予想してみましょう。解答は各問題を開くと確認できます。</p>
+      <details class="question"><summary>問い1：斜面の角度 φ を大きくすると、斜面方向・垂直方向の加速度はどう変化する？</summary><div class="answer">斜面方向は <span class="math">aₓ＝−g sinφ</span>、垂直方向は <span class="math">aᵧ＝−g cosφ</span> です。φを大きくすると、sinφは大きくなり、cosφは小さくなります。したがって、斜面下向きの加速度の大きさは増え、斜面に押し付ける向きの加速度の大きさは減ります。</div></details>
+      <details class="question"><summary>問い2：初速度 v₀ を2倍にすると、初回衝突までの時間と衝突位置はどうなる？</summary><div class="answer">衝突時刻は <span class="math">t＝2v₀ sinθ／(g cosφ)</span> なので2倍になります。衝突位置は <span class="math">x＝2v₀² sinθ cos(θ＋φ)／(g cos²φ)</span> なので4倍になります。</div></details>
+      <details class="question"><summary>問い3：はね返り係数 e を大きくすると、2回目の衝突までの時間はどうなる？</summary><div class="answer">2回目の衝突までの時間は <span class="math">t₂＝2ev₀ sinθ₀／(g cosφ)</span> です。したがって e に比例し、eが大きいほど次の衝突までの時間は長くなります。</div></details>
+    </div>
+  </section>
+  <section class="card section">
+    <div class="section-inner">
+      <h2>入試問題の答え・考え方</h2>
+      <p class="small-muted">添付問題の解答欄と照合した答えです。考え方を確認したいときに開いてください。</p>
+      <details class="question"><summary>（1）x方向・y方向の加速度</summary><div class="answer"><strong>答え：⑦</strong><br>重力を斜面に平行な方向と垂直な方向に分解します。x軸正方向は斜面上向き、y軸正方向は斜面から離れる向きなので、<span class="math">aₓ＝−g sinφ、aᵧ＝−g cosφ</span> です。</div></details>
+      <details class="question"><summary>（2）初めて斜面に衝突する時刻</summary><div class="answer"><strong>答え：②</strong><br>垂直方向の位置は <span class="math">y＝v₀ sinθ・t−(1/2)g cosφ・t²</span>。斜面に戻るとき y＝0（t＞0）なので、<span class="math">t＝2v₀ sinθ／(g cosφ)</span> です。</div></details>
+      <details class="question"><summary>（3）φ＝π/4 のとき、垂直に衝突する tanθ₀</summary><div class="answer"><strong>答え：②（1/2）</strong><br>衝突直前の斜面方向速度が0になる条件です。<span class="math">v₀ cosθ₀−g sinφ・t＝0</span> に（2）の時刻を代入すると、<span class="math">tanθ₀＝cosφ／(2 sinφ)</span>。φ＝45°より <span class="math">tanθ₀＝1/2</span> です。</div></details>
+      <details class="question"><summary>（4）垂直衝突後、再び斜面に衝突するまでの時間</summary><div class="answer"><strong>答え：⑥</strong><br>衝突直前の垂直方向速度の大きさは <span class="math">v₀ sinθ₀</span>。反発後はその e 倍で斜面から離れます。よって、<span class="math">t₂＝2ev₀ sinθ₀／(g cosφ)</span>。φ＝45°より <span class="math">t₂＝(2√2 ev₀／g) sinθ₀</span> です。</div></details>
+      <details class="question"><summary>（5）初めて斜面に衝突する位置が最も遠くなる角度 θ₁</summary><div class="answer"><strong>答え：④（π/8）</strong><br>衝突位置は <span class="math">x＝2v₀² sinθ cos(θ＋φ)／(g cos²φ)</span>。これを最大にする条件は <span class="math">2θ＋φ＝π/2</span> です。φ＝π/4より <span class="math">θ₁＝π/8</span> となります。</div></details>
+      <div class="warning">この教材では、問題文の後半で指定された φ＝π/4 を（3）〜（5）に適用しています。（1）（2）は一般の斜面角で確認できます。</div>
+    </div>
+  </section>
+</main>
+<div class="footer">物理シミュレーション教材｜数値計算は理想化された斜面投射モデルに基づきます。空気抵抗・小球の大きさは無視しています。</div>
+<script>
+(()=>{
+'use strict';
+const G=9.8, RAD=Math.PI/180;
+const $=id=>document.getElementById(id);
+const scene=$('scene'), ctx=scene.getContext('2d'), chart=$('chart'), cctx=chart.getContext('2d');
+let mode='basic', playing=false, elapsed=0, lastFrame=0, raf=0;
+let params={v0:10,phi:45,theta:30,e:.70};
+const fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+const deg=r=>r/RAD;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function setMode(m){pause();mode=m;elapsed=0;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===m)));
+  $('phiControl').hidden=m!=='basic'; $('thetaControl').hidden=m==='bounce'; $('thetaFixed').hidden=m!=='bounce'; $('eControl').hidden=m!=='bounce';
+  $('modeBadge').textContent=m==='basic'?'一般の斜面':m==='bounce'?'φ＝45°・垂直衝突':'φ＝45°・飛距離最大';
+  $('sceneTitle').textContent=m==='bounce'?'衝突前後の小球の軌道':m==='range'?'打ち上げ角度と到達距離':'小球の軌道';
+  $('chartTitle').textContent=m==='range'?'打ち上げ角度と到達距離': '位置と時間';
+  $('chartNote').textContent=m==='range'?'到達距離が最大となる角度を確認':'アニメーションに連動';
+  $('conditionNote').textContent=m==='basic'?'斜面角・打ち上げ角は自由に変更できます。':m==='bounce'?'問題文の指定に合わせ、斜面角は45°、打ち上げ角は垂直衝突する条件に固定しています。':'問題文の指定に合わせ、斜面角は45°です。打ち上げ角を変えて到達距離を比較します。';
+  $('thetaFixed').textContent='垂直衝突する角度 θ₀ = tan⁻¹(1/2) ≒ 26.6° に自動設定されています。';
+  if(m==='bounce'){params.phi=45;params.theta=Math.atan(.5)*180/Math.PI;}
+  if(m==='range'){params.phi=45;params.theta=22.5;}
+  syncControls();updateAll();
+}
+function syncControls(){
+  $('v0').value=params.v0;$('v0Val').textContent=fmt(params.v0,1)+' m/s';
+  $('phi').value=params.phi;$('phiVal').textContent=fmt(params.phi,1)+'°';
+  $('theta').value=params.theta;$('thetaVal').textContent=fmt(params.theta,1)+'°';
+  $('e').value=params.e;$('eVal').textContent=fmt(params.e,2);
+  const maxTheta=Math.max(5,89-params.phi);
+  $('theta').max=maxTheta;
+  if(mode==='basic'){
+    params.theta=clamp(params.theta,5,maxTheta);
+    $('theta').value=params.theta;$('thetaVal').textContent=fmt(params.theta,1)+'°';
+  }
+  $('phi').disabled=mode!=='basic';$('theta').disabled=mode==='bounce';
+}
+function physics(){
+  const v0=params.v0, phi=params.phi*RAD, theta=params.theta*RAD, e=params.e;
+  const ax=-G*Math.sin(phi), ay=-G*Math.cos(phi);
+  const thit=2*v0*Math.sin(theta)/(G*Math.cos(phi));
+  const xhit=v0*Math.cos(theta)*thit+.5*ax*thit*thit;
+  const vxHit=v0*Math.cos(theta)+ax*thit;
+  const vyHit=v0*Math.sin(theta)+ay*thit;
+  const tBounce=mode==='bounce'?2*e*Math.abs(vyHit)/(G*Math.cos(phi)):0;
+  return {v0,phi,theta,e,ax,ay,thit,xhit,vxHit,vyHit,tBounce,total:thit+tBounce};
+}
+function positionAt(t,p){
+ if(mode==='bounce'&&t>p.thit){const tau=Math.min(t-p.thit,p.tBounce);return {x:p.xhit+p.vxHit*tau+.5*p.ax*tau*tau,y:ePostVy(p)*tau+.5*p.ay*tau*tau,vx:p.vxHit+p.ax*tau,vy:ePostVy(p)+p.ay*tau,phase:'反発後'};}
+ const tt=Math.min(t,p.thit);return {x:p.v0*Math.cos(p.theta)*tt+.5*p.ax*tt*tt,y:p.v0*Math.sin(p.theta)*tt+.5*p.ay*tt*tt,vx:p.v0*Math.cos(p.theta)+p.ax*tt,vy:p.v0*Math.sin(p.theta)+p.ay*tt,phase:'衝突前'};
+}
+function ePostVy(p){return -p.e*p.vyHit;}
+function world(x,y,phi){return {X:x*Math.cos(phi)-y*Math.sin(phi),Y:x*Math.sin(phi)+y*Math.cos(phi)};}
+function drawArrow(c,x1,y1,x2,y2,color,width=3){const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy);if(len<1)return;c.strokeStyle=color;c.fillStyle=color;c.lineWidth=width;c.lineCap='round';c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();const a=Math.atan2(dy,dx),h=9;c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-h*Math.cos(a-.45),y2-h*Math.sin(a-.45));c.lineTo(x2-h*Math.cos(a+.45),y2-h*Math.sin(a+.45));c.closePath();c.fill();}
+function trajectorySamples(p){const arr=[];const n=100;for(let i=0;i<=n;i++){const t=p.thit*i/n;arr.push(positionAt(t,p));}if(mode==='bounce'&&p.tBounce>0){for(let i=1;i<=n;i++){const t=p.thit+p.tBounce*i/n;arr.push(positionAt(t,p));}}return arr;}
+function drawScene(){
+ const p=physics(), W=scene.width,H=scene.height, samples=trajectorySamples(p), pts=samples.map(s=>world(s.x,s.y,p.phi));
+ const maxX=Math.max(1,...pts.map(a=>a.X)), minX=Math.min(-.7,...pts.map(a=>a.X)), maxY=Math.max(.8,...pts.map(a=>a.Y));
+ const scale=Math.min((W-125)/(maxX-minX+.6),(H-100)/(maxY+.6));
+ const ox=68-minX*scale, oy=H-48;
+ const scr=(X,Y)=>({x:ox+X*scale,y:oy-Y*scale});
+ ctx.clearRect(0,0,W,H);ctx.fillStyle='#fbfdff';ctx.fillRect(0,0,W,H);
+ // subtle grid
+ ctx.strokeStyle='#edf2f8';ctx.lineWidth=1;for(let x=40;x<W;x+=50){ctx.beginPath();ctx.moveTo(x,10);ctx.lineTo(x,H-35);ctx.stroke();}
+ // horizontal reference
+ let a=scr(minX-.25,0),b=scr(maxX+.55,0);ctx.strokeStyle='#9aa9ba';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+ // inclined plane
+ const s1=scr(-.65*Math.cos(p.phi),-.65*Math.sin(p.phi)), s2=scr((maxX/Math.max(.1,Math.cos(p.phi))+.75)*Math.cos(p.phi),(maxX/Math.max(.1,Math.cos(p.phi))+.75)*Math.sin(p.phi));
+ ctx.strokeStyle='#475569';ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(s1.x,s1.y);ctx.lineTo(s2.x,s2.y);ctx.stroke();
+ // slope hatch marks
+ ctx.strokeStyle='#94a3b8';ctx.lineWidth=1.2;for(let q=-.45;q<maxX/Math.max(.1,Math.cos(p.phi));q+=.28){const u=scr(q*Math.cos(p.phi),q*Math.sin(p.phi));ctx.beginPath();ctx.moveTo(u.x-4,u.y+8);ctx.lineTo(u.x+7,u.y+3);ctx.stroke();}
+ const O=scr(0,0);ctx.fillStyle='#334155';ctx.beginPath();ctx.arc(O.x,O.y,4,0,Math.PI*2);ctx.fill();ctx.font='bold 15px sans-serif';ctx.fillText('O',O.x-17,O.y+19);
+ // basis arrows at O
+ const ex=scr(.72*Math.cos(p.phi),.72*Math.sin(p.phi));drawArrow(ctx,O.x,O.y,ex.x,ex.y,'#2563eb',2.5);ctx.fillStyle='#2563eb';ctx.font='bold 14px sans-serif';ctx.fillText('x',ex.x+5,ex.y-3);
+ const ey=scr(-.58*Math.sin(p.phi),.58*Math.cos(p.phi));drawArrow(ctx,O.x,O.y,ey.x,ey.y,'#0891b2',2.5);ctx.fillStyle='#0891b2';ctx.fillText('y',ey.x-15,ey.y-3);
+ // trajectory complete path
+ ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(scr(q.X,q.Y).x,scr(q.X,q.Y).y):ctx.moveTo(scr(q.X,q.Y).x,scr(q.X,q.Y).y));ctx.strokeStyle='#b8c5d8';ctx.lineWidth=2.5;ctx.setLineDash([6,5]);ctx.stroke();ctx.setLineDash([]);
+ // pre/post path distinction
+ const ppre=pts.slice(0,101);ctx.beginPath();ppre.forEach((q,i)=>i?ctx.lineTo(scr(q.X,q.Y).x,scr(q.X,q.Y).y):ctx.moveTo(scr(q.X,q.Y).x,scr(q.X,q.Y).y));ctx.strokeStyle='#2563eb';ctx.lineWidth=3.5;ctx.stroke();
+ if(mode==='bounce'&&pts.length>101){ctx.beginPath();pts.slice(100).forEach((q,i)=>i?ctx.lineTo(scr(q.X,q.Y).x,scr(q.X,q.Y).y):ctx.moveTo(scr(q.X,q.Y).x,scr(q.X,q.Y).y));ctx.strokeStyle='#ea580c';ctx.lineWidth=3.5;ctx.stroke();}
+ // impact marker
+ const hit=scr(...Object.values(world(p.xhit,0,p.phi)));ctx.fillStyle='#dc2626';ctx.beginPath();ctx.arc(hit.x,hit.y,5,0,Math.PI*2);ctx.fill();ctx.font='12px sans-serif';ctx.fillStyle='#b91c1c';ctx.fillText('1回目の衝突',hit.x+8,hit.y-10);
+ if(mode==='bounce'&&p.tBounce>0){const second=positionAt(p.total,p);const z=world(second.x,0,p.phi),sp=scr(z.X,z.Y);ctx.fillStyle='#ea580c';ctx.beginPath();ctx.arc(sp.x,sp.y,5,0,Math.PI*2);ctx.fill();ctx.fillText('2回目',sp.x+7,sp.y+17);}
+ // current ball and velocity vector
+ const t=clamp(elapsed,0,p.total),s=positionAt(t,p),w=world(s.x,s.y,p.phi),cur=scr(w.X,w.Y);
+ ctx.shadowColor='rgba(15,45,80,.25)';ctx.shadowBlur=7;ctx.fillStyle='#f59e0b';ctx.beginPath();ctx.arc(cur.x,cur.y,10,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#854d0e';ctx.lineWidth=1.5;ctx.stroke();
+ const scaleV=.12*scale;const vW=world(s.vx*.12,s.vy*.12,p.phi);drawArrow(ctx,cur.x,cur.y,cur.x+vW.X*scale,cur.y-vW.Y*scale,'#16a34a',3);ctx.fillStyle='#15803d';ctx.font='bold 12px sans-serif';ctx.fillText('速度',cur.x+10,cur.y-17);
+ // angle labels and text
+ ctx.fillStyle='#334155';ctx.font='13px sans-serif';ctx.fillText(`φ = ${fmt(deg(p.phi),1)}°`,W-130,27);
+ ctx.fillStyle='#475569';ctx.font='12px sans-serif';ctx.fillText('青：衝突前　橙：反発後',18,H-14);
+ if(mode==='bounce'&&Math.abs(p.vxHit)<1e-5){ctx.fillStyle='#0f766e';ctx.font='bold 12px sans-serif';ctx.fillText('衝突直前の速度は斜面に垂直',W-260,49);}
+}
+function drawChart(){
+ const p=physics(),W=chart.width,H=chart.height; cctx.clearRect(0,0,W,H);cctx.fillStyle='#fbfdff';cctx.fillRect(0,0,W,H);
+ if(mode==='range'){
+  const left=65,right=W-25,top=25,bottom=H-48;const minT=5,maxT=44;const vals=[];for(let d=minT;d<=maxT;d+=.25){const th=d*RAD,ph=Math.PI/4,t=2*p.v0*Math.sin(th)/(G*Math.cos(ph));const x=p.v0*Math.cos(th)*t-.5*G*Math.sin(ph)*t*t;vals.push({d,x});}
+  const ymax=Math.max(...vals.map(v=>v.x))*1.12;const X=d=>left+(d-minT)/(maxT-minT)*(right-left),Y=x=>bottom-x/ymax*(bottom-top);
+  cctx.strokeStyle='#94a3b8';cctx.lineWidth=1.4;cctx.beginPath();cctx.moveTo(left,top);cctx.lineTo(left,bottom);cctx.lineTo(right,bottom);cctx.stroke();
+  cctx.strokeStyle='#e3eaf2';for(let i=1;i<=4;i++){let y=bottom-(bottom-top)*i/4;cctx.beginPath();cctx.moveTo(left,y);cctx.lineTo(right,y);cctx.stroke();}
+  cctx.beginPath();vals.forEach((v,i)=>i?cctx.lineTo(X(v.d),Y(v.x)):cctx.moveTo(X(v.d),Y(v.x)));cctx.strokeStyle='#2563eb';cctx.lineWidth=3;cctx.stroke();
+  const opt=22.5,selected=params.theta,range=d=>{let th=d*RAD,ph=Math.PI/4,tt=2*p.v0*Math.sin(th)/(G*Math.cos(ph));return p.v0*Math.cos(th)*tt-.5*G*Math.sin(ph)*tt*tt;};
+  const xo=X(opt),yo=Y(range(opt)),xs=X(selected),ys=Y(range(selected));
+  cctx.setLineDash([5,4]);cctx.strokeStyle='#16a34a';cctx.beginPath();cctx.moveTo(xo,top);cctx.lineTo(xo,bottom);cctx.stroke();cctx.setLineDash([]);
+  [[xo,yo,'#16a34a'],[xs,ys,'#ea580c']].forEach(([x,y,col])=>{cctx.fillStyle=col;cctx.beginPath();cctx.arc(x,y,6,0,Math.PI*2);cctx.fill();});
+  cctx.fillStyle='#166534';cctx.font='bold 14px sans-serif';cctx.fillText('最大：22.5°',Math.min(xo+10,right-115),Math.max(yo-12,top+15));
+  cctx.fillStyle='#c2410c';cctx.font='12px sans-serif';cctx.fillText('設定中 '+fmt(selected,1)+'°',Math.min(xs+8,right-112),Math.min(ys+20,bottom-4));
+  cctx.fillStyle='#475569';cctx.font='12px sans-serif';cctx.fillText('打ち上げ角 θ（°）',W/2-53,H-12);cctx.save();cctx.translate(17,H/2+35);cctx.rotate(-Math.PI/2);cctx.fillText('初回衝突位置 x（m）',0,0);cctx.restore();
+ }else{
+  const left=65,right=W-25,top=22,bottom=H-45;const maxT=p.total||p.thit;const ts=Array.from({length:121},(_,i)=>maxT*i/120);const dat=ts.map(t=>positionAt(t,p));const maxX=Math.max(.1,...dat.map(d=>d.x))*1.1;const minX=Math.min(0,...dat.map(d=>d.x))*1.1;const maxY=Math.max(.1,...dat.map(d=>d.y))*1.1;
+  const X=t=>left+t/maxT*(right-left),Yx=x=>bottom-(x-minX)/(maxX-minX||1)*(bottom-top),Yy=y=>bottom-y/maxY*(bottom-top);
+  cctx.strokeStyle='#94a3b8';cctx.lineWidth=1.3;cctx.beginPath();cctx.moveTo(left,top);cctx.lineTo(left,bottom);cctx.lineTo(right,bottom);cctx.stroke();
+  cctx.strokeStyle='#e5ebf2';for(let i=1;i<=3;i++){let y=bottom-(bottom-top)*i/3;cctx.beginPath();cctx.moveTo(left,y);cctx.lineTo(right,y);cctx.stroke();}
+  cctx.beginPath();dat.forEach((d,i)=>i?cctx.lineTo(X(ts[i]),Yx(d.x)):cctx.moveTo(X(ts[i]),Yx(d.x)));cctx.strokeStyle='#2563eb';cctx.lineWidth=2.7;cctx.stroke();
+  cctx.beginPath();dat.forEach((d,i)=>i?cctx.lineTo(X(ts[i]),Yy(d.y)):cctx.moveTo(X(ts[i]),Yy(d.y)));cctx.strokeStyle='#0891b2';cctx.lineWidth=2.7;cctx.stroke();
+  const now=positionAt(elapsed,p);cctx.setLineDash([4,4]);cctx.strokeStyle='#64748b';cctx.beginPath();cctx.moveTo(X(clamp(elapsed,0,maxT)),top);cctx.lineTo(X(clamp(elapsed,0,maxT)),bottom);cctx.stroke();cctx.setLineDash([]);
+  cctx.fillStyle='#2563eb';cctx.font='12px sans-serif';cctx.fillText('x（斜面方向）',left+5,top+12);cctx.fillStyle='#0891b2';cctx.fillText('y（斜面に垂直）',left+130,top+12);cctx.fillStyle='#64748b';cctx.fillText('時間 t（s）',W/2-30,H-10);
+ }
+}
+function updateStats(){const p=physics(),s=positionAt(elapsed,p);$('axVal').textContent=fmt(p.ax,2);$('ayVal').textContent=fmt(p.ay,2);$('hitTimeVal').textContent=fmt(p.thit,3);$('rangeVal').textContent=fmt(p.xhit,3);$('vxVal').textContent=fmt(s.vx,2);$('vyVal').textContent=fmt(s.vy,2);$('bounceTimeStat').hidden=mode!=='bounce';$('bounceTimeVal').textContent=mode==='bounce'?fmt(p.tBounce,3):'—';$('timeReadout').textContent=`t = ${fmt(Math.min(elapsed,p.total),2)} s`;
+ if(mode==='bounce'){$('timeLabel').textContent='1回目の衝突時刻';$('rangeLabel').textContent='1回目の衝突位置 x';}
+ else if(mode==='range'){$('timeLabel').textContent='初回衝突時刻';$('rangeLabel').textContent='設定角での衝突位置 x';}
+ else{$('timeLabel').textContent='初回衝突時刻';$('rangeLabel').textContent='初回衝突位置 x';}
+}
+function updateFormulas(){const p=physics();let html='';
+ const add=(tag,math)=>html+=`<div class="formula"><span class="tag">${tag}</span><span class="math">${math}</span></div>`;
+ add('加速度の成分','aₓ = −g sinφ　　aᵧ = −g cosφ');
+ add('斜面に戻る時刻','t = 2v₀ sinθ ／ (g cosφ)');
+ add('初回衝突位置','x = 2v₀² sinθ cos(θ＋φ) ／ (g cos²φ)');
+ if(mode==='bounce'){
+  add('垂直衝突の条件（φ＝45°）','tanθ₀ = 1/2');
+  add('反発後、次に衝突するまで','t₂ = 2√2 e v₀ sinθ₀ ／ g');
+ }else if(mode==='range'){
+  add('到達距離が最大となる条件','2θ₁＋φ = π／2');
+  add('φ＝45° のとき','θ₁ = π／8 = 22.5°');
+ }
+ $('formulas').innerHTML=html;
+}
+function updateLearning(){const p=physics();let html='';
+ if(mode==='basic') html='<ul><li>座標軸は斜面に平行なx方向、斜面に垂直なy方向です。</li><li>重力加速度をこの2方向に分解すると、どちらも負の向きになります。</li><li>斜面に戻る条件は、垂直方向の位置 y が再び0になることです。</li></ul>';
+ if(mode==='bounce') html='<ul><li>斜面に垂直に衝突する条件は、衝突直前の斜面方向速度が0になることです。</li><li>なめらかな斜面との衝突では、斜面に平行な速度成分は変化せず、垂直成分だけが反転して e 倍になります。</li><li>反発後は、垂直方向の初速度が e 倍になるため、次の衝突までの時間も e 倍に比例します。</li></ul>';
+ if(mode==='range') html='<ul><li>斜面に沿った到達距離 x は、打ち上げ角 θ によって変わります。</li><li>グラフの山の頂点が、点Oから最も遠い位置に衝突する角度です。</li><li>φ＝45°では、最大となる角度は22.5°（π/8）です。オレンジの点を動かして緑の点と比べましょう。</li></ul>';
+ $('learningText').innerHTML=html;
+}
+function updateAll(){const maxTheta=Math.max(5,89-params.phi);if(mode==='basic')params.theta=clamp(params.theta,5,maxTheta);$('v0Val').textContent=fmt(params.v0,1)+' m/s';$('phiVal').textContent=fmt(params.phi,1)+'°';$('thetaVal').textContent=fmt(params.theta,1)+'°';$('eVal').textContent=fmt(params.e,2);updateStats();updateFormulas();updateLearning();drawScene();drawChart();}
+function pause(){playing=false;if(raf)cancelAnimationFrame(raf);raf=0;$('playBtn').textContent='▶ 再生';}
+function tick(ts){if(!playing)return;if(!lastFrame)lastFrame=ts;const dt=Math.min(.05,(ts-lastFrame)/1000);lastFrame=ts;elapsed+=dt*Number($('speedSelect').value);const p=physics();if(elapsed>=p.total){elapsed=p.total;pause();}updateStats();drawScene();drawChart();if(playing)raf=requestAnimationFrame(tick);}
+function play(){const p=physics();if(elapsed>=p.total)elapsed=0;playing=true;lastFrame=0;$('playBtn').textContent='Ⅱ 一時停止';raf=requestAnimationFrame(tick);}
+$('playBtn').addEventListener('click',()=>playing?pause():play());
+$('resetBtn').addEventListener('click',()=>{pause();elapsed=0;updateAll();});
+document.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+$('v0').addEventListener('input',e=>{pause();params.v0=Number(e.target.value);updateAll();});
+$('phi').addEventListener('input',e=>{pause();params.phi=Number(e.target.value);syncControls();updateAll();});
+$('theta').addEventListener('input',e=>{pause();params.theta=Number(e.target.value);updateAll();});
+$('e').addEventListener('input',e=>{pause();params.e=Number(e.target.value);updateAll();});
+window.addEventListener('resize',()=>{drawScene();drawChart();});
+// Start in the general-motion mode.
+syncControls();updateAll();
+})();
+</script>
+</body>
+</html>
