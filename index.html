@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物理シミュレーション集</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 32px 18px;
+  font-family: "Noto Sans JP", "Yu Gothic", sans-serif;
+  background: #f4f6fa;
+  color: #253047;
+}
+main { max-width: 850px; margin: auto; }
+header { text-align: center; margin: 30px 0 38px; }
+h1 { font-size: clamp(25px, 5vw, 36px); margin-bottom: 10px; }
+header p { color: #68758a; }
+.cards { display: grid; gap: 18px; }
+.card {
+  display: block;
+  padding: 24px;
+  background: white;
+  border: 1px solid #e0e5ed;
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .15s, box-shadow .15s;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px #26334a16;
+}
+.category { color: #5576a8; font-size: 13px; font-weight: bold; }
+.card h2 { font-size: 20px; margin: 9px 0; }
+.card p { color: #68758a; font-size: 14px; line-height: 1.7; }
+.link { color: #3268b0; font-weight: bold; font-size: 14px; }
+footer { text-align: center; color: #8993a3; font-size: 12px; margin-top: 35px; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>物理シミュレーション集</h1>
+  <p>大学入試対策・インタラクティブ教材</p>
+</header>
+
+<section class="cards">
+  <a class="card" href="./capacitor_dielectric/">
+    <div class="category">電磁気 ｜ 2024年度 東海大学</div>
+    <h2>コンデンサーと誘電体</h2>
+    <p>誘電体の挿入距離を変化させ、電気容量・電気量・静電エネルギーの変化を確認しよう。</p>
+    <span class="link">シミュレーションを開始 →</span>
+  </a>
+
+  <a class="card" href="./projectile_incline/">
+    <div class="category">力学 ｜ 2024年度 日本大学</div>
+    <h2>斜面上の投射運動</h2>
+    <p>斜面から打ち上げた小球の運動、斜面との衝突、反発後の運動を確認しよう。</p>
+    <span class="link">シミュレーションを開始 →</span>
+  </a>
+</section>
+
+<footer>
+  物理シミュレーション教材
+</footer>
+</main>
+</body>
+</html>
